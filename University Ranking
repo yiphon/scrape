@@ -1,0 +1,44 @@
+import requests
+from bs4 import BeautifulSoup as beso
+import re
+import bs4
+
+def getUnivText(url):
+    try:
+        r=requests.get(url)
+        r.raise_for_status()
+        r.encoding=r.apparent_encoding
+        html=r.text
+        return html
+    except:
+        print('Error.')
+
+def setUnivForm(ulist,html):
+    try:
+        nameGet = re.findall(u'target=\"_blank\">[\u4e00-\u9fa5]+.[\u4e00-\u9fa5]*.*', html)
+        rankGet=re.findall(r'td>[1-9]\d*<',html)
+        scoreGet=re.findall(r'td>[\d]+\.[\d]</td',html)
+        for i in range(len(scoreGet)):
+            name = nameGet[i].split('>')[1]
+            rank=rankGet[i].split('>')[1]
+            score=scoreGet[i].split('>')[1]
+            score=score[:-4]
+            rank=rank[:-1]
+            name=name[:-3]
+            ulist.append([rank,name,score])
+    except:
+        pass
+
+
+def printUniv(ulist):
+    plt = '{0:^6}\t{1:{3}^16}\t{2:^8}'
+    print(plt.format('Rank','Univ','Score',chr(12288)))
+    for i in range(100):
+        u=ulist[i]
+        plt='{0:^6}\t{1:{3}^16}\t{2:^8}'
+        print(plt.format(u[0],u[1],u[2],chr(12288)))
+
+url='http://www.zuihaodaxue.com/ARWU2016.html'
+html=getUnivText(url)
+ulist=[]
+setUnivForm(ulist,html)
