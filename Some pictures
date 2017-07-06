@@ -1,0 +1,124 @@
+import requests,re,traceback
+from bs4 import BeautifulSoup as bs
+
+def getText(url,code='utf-8'):
+    try:
+        kv = {'user-agent': 'Chrome/10.0'}
+        r=requests.get(url,headers=kv)
+        r.raise_for_status()
+        r.encoding=code
+        demo=r.text
+        return demo
+    except:
+        return ''
+
+
+def getStockList(urlList,stockList):
+    demo=getText(urlList,'GB2312')
+    soup=bs(demo,'html.parser')
+    a=soup.find_all('a')
+    for i in a:
+        try:
+            href=i.attrs['href']
+
+            stockName=re.findall(r'com/[s][hz]\d{6}\.html',href)[0][4:-5]
+            stockList.append(stockName)
+            #print(stockList)
+        except:
+            continue
+
+def getStockInfo(urlMainInfo,stockList,fpath):
+    count=0
+    for stock in stockList:
+        urlInfo=urlMainInfo+str(stock)+'/html'
+        demo=getText(urlInfo)
+        #print(urlInfo)
+        with open(fpath,'a',encoding='utf-8') as f:
+            try:
+                if demo=='':
+                    continue
+                soup=bs(demo,'html.parser')
+                infoTag=soup.find('div',attrs={'class':'stock-bets'})  #tag
+                #print(type(infoTag))
+                #infoTag=bs(infoTag,'html.parser')
+                #print(type(infoTag))
+                name=infoTag.find('a',attrs={'class':'bets-name'})  #对tag的查找功能，可以有find，也有find_all。find再对应得到相同类型的tag。
+                #span=name.find_all('span')
+                #print(span.string)
+                f.write('Name:'+name.text.split( )[0]+'\n')
+
+                #print(type(name))
+
+                #print(infoTag)
+                keys=infoTag.find_all('dt')
+                #print(type(keys),keys,keys[0].text)
+                values=infoTag.find_all('dd')
+                for i in range(len(keys)):
+                    key=keys[i].text
+                    value=values[i].text
+                    f.write(key+' '+value+'\n')
+                f.write('\n')
+                count=count+1
+                print('\rProceeding: {:.2f}'.format(count*100/len(stockList)),end=' ')
+            except:
+                count = count + 1
+                print('\rProceeding: {:.2f} '.format(count * 100 / len(stockList)), end=' ')
+                traceback.print_exc()
+                continue
+
+urlMainInfo='https://gupiao.baidu.com/stock/'
+urlList='http://quote.eastmoney.com/stocklist.html'
+fpath='D:\\stockInfo1.txt'
+stockList=[]
+getStockList(urlList,stockList)
+getStockInfo(urlMainInfo,stockList,fpath)'''
+
+#小黄图爬虫
+import requests,re,bs4
+from bs4 import BeautifulSoup as bs
+
+def getText(url):
+    try:
+        kv={'user-agent':'Chrome/10.0'}
+        r=requests.get(url,headers=kv)
+        r.encoding='utf-8'
+        return r.text
+    except:
+        return ''
+
+def getPic(html,textList,picList):
+    try:
+        soup=bs(html,'html.parser')
+        infoTag=soup.find_all('h2')
+        textList.append(infoTag[0].text)
+        picInfoTag=soup.find_all('div',attrs={'class':'content'})
+        #print(picInfoTag)
+        urlGet=re.findall(r'src=\".*?\"',str(picInfoTag))[0][5:-1]
+        picList.append(urlGet)
+        print(len(textList))
+    except:
+        pass
+
+
+def writeInfo(textList,picList):
+    try:
+        for i in range(len(textList)):
+            path='D://picture//'+str(textList[i])+'.jpg'
+            #print(path,i)
+            url=picList[i]
+            r=requests.get(url)
+            with open(path,'wb') as f:
+                f.write(r.content)
+                f.close()
+                print('Done. Pic {}'.format(i))
+    except:
+        pass
+
+pages=1000
+textList=[]
+picList=[]
+for i in range(pages+1):
+    url='http://www.mmjpg.com/mm/'+str(i+1)
+    html=getText(url)
+    getPic(html,textList,picList)
+writeInfo(textList,picList)
