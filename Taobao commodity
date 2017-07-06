@@ -1,0 +1,46 @@
+import requests
+import bs4
+from bs4 import BeautifulSoup as beso
+import re
+
+def getInfo(url):
+    try:
+        kv={'user-agent':'Chrome/11.0'}
+        r=requests.get(url,params=kv)
+        r.raise_for_status()
+        r.encoding=r.apparent_encoding
+        demo=r.text
+        return demo
+    except:
+        return ''
+
+def getInfoText(ulist,html):
+    try:
+        nameGet=re.findall(r'\"cat\":\"1512\",\"title\":\".+?\",\"pic_url\"',html)
+        priceGet=re.findall(r'\"price\":\".+?\",\"trace\"',html)
+        for i in range(len(nameGet)):
+            name=nameGet[i][22:-11]
+            price=priceGet[i][9:-9]
+            ulist.append([name,price])
+    except:
+        pass
+
+def printInfo(ulist,i):
+    try:
+        plt = '{0:^4}\t{1:^8}\t{2:{3}^30}'
+        if i==0:
+            print(plt.format('No.','Price','Name',chr(12288)))
+        for j in range(len(ulist)):
+            u=ulist[j]
+            print(plt.format(i*48+j+1,u[1],u[0],chr(12288)))
+    except:
+        pass
+
+commodity=str(input('Input the commodity.'))
+pages=int(input('How many pages do you want to scrape?'))
+for i in range(pages):
+    ulist=[]
+    url='http://s.taobao.com/search?&q='+commodity+'&s='+str(48*i)
+    html=getInfo(url)
+    getInfoText(ulist,html)
+    printInfo(ulist,i)
